@@ -3,21 +3,7 @@
 # pid_file: /var/run/gmqttd.pid 示例 PID 文件路径。
 
 listeners:
-  # bind address 绑定地址
   - address: ":1883"
-#    tls: TLS 配置
-#      cacert: "path_to_ca_cert_file" CA 证书路径
-#      cert: "path_to_cert_file" 服务器证书路径
-#      key: "path_to_key_file" 服务器私钥路径
-  - address: ":8883"
-    tls:
-      cacert: "./certs/ca.crt"
-      cert: "./certs/server.crt"
-      key: "./certs/server.key"
-  # - address: ":8883" 示例备用监听地址
-  #   # websocket setting WebSocket 设置
-  #   websocket: WebSocket 配置节
-  #     path: "/" WebSocket 路径
 
 api:
   grpc:
