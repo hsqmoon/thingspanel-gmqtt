@@ -42,7 +42,6 @@ func runtimeInit() error {
 	}
 
 	Init() // init database & redis
-	go DefaultMqttClient.MqttInit()
 	return nil
 }
 
@@ -54,6 +53,7 @@ type Thingspanel struct{}
 
 func (t *Thingspanel) Load(service server.Server) error {
 	Log = server.LoggerWithField(zap.String("plugin", Name))
+	DefaultMqttClient.SetPublisher(service.Publisher())
 	runtimeInitOnce.Do(func() {
 		runtimeInitErr = runtimeInit()
 	})
