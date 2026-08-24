@@ -15,10 +15,10 @@ db:
     psqlpass: postgresThingsPanel
 
 mqtt:
-  # root用户的密码
+  # 生产必须通过 GMQTT_MQTT_PASSWORD / GMQTT_MQTT_PLUGIN_PASSWORD 覆盖。
   broker: localhost:1883
-  password: "root"
-  plugin_password: "plugin"
+  password: "environment-required"
+  plugin_password: "environment-required"
 
 # 监控面板
 # http://127.0.0.1:8082

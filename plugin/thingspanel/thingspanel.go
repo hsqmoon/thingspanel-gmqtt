@@ -40,6 +40,12 @@ func runtimeInit() error {
 	if err := viper.ReadInConfig(); err != nil {
 		return fmt.Errorf("thingspanel: failed to read configuration file: %w", err)
 	}
+	for _, key := range []string{"mqtt.password", "mqtt.plugin_password"} {
+		value := strings.TrimSpace(viper.GetString(key))
+		if value == "" || value == "environment-required" {
+			return fmt.Errorf("thingspanel: %s must be set by environment", key)
+		}
+	}
 
 	Init() // init database & redis
 	return nil

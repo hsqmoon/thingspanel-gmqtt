@@ -5,24 +5,6 @@
 listeners:
   - address: ":1883"
 
-api:
-  grpc:
-    # The gRPC server listen address. Supports unix socket and tcp socket. gRPC 服务器监听地址，支持 Unix 套接字和 TCP 套接字。
-    - address: "tcp://127.0.0.1:8084"
-    #- address: "unix:///var/run/gmqttd.sock" 示例 Unix 套接字地址
-#      tls: TLS 配置
-#        cacert: "path_to_ca_cert_file" CA 证书路径
-#        cert: "path_to_cert_file" 服务器证书路径
-#        key: "path_to_key_file" 服务器私钥路径
-  http:
-      # The HTTP server listen address. This is a reverse-proxy server in front of gRPC server. HTTP 服务器监听地址，是 gRPC 的反向代理。
-    - address: "tcp://0.0.0.0:8083"
-      map: "tcp://127.0.0.1:8084" # The backend gRPC server endpoint, 后端 gRPC 服务地址。
-#      tls: TLS 配置
-#        cacert: "path_to_ca_cert_file" CA 证书路径
-#        cert: "path_to_cert_file" 服务器证书路径
-#        key: "path_to_key_file" 服务器私钥路径
-
 mqtt:
   # The maximum session expiry interval in seconds. 会话过期期限（秒）。
   session_expiry: 2h
@@ -145,14 +127,9 @@ plugins:
 # plugin loading orders 插件加载顺序
 plugin_order:
   - thingspanel # 启用 ThingsPanel 插件
-  # Uncomment auth to enable authentication. 取消注释 auth 以启用认证。
-  #- auth # 启用认证插件
-  - prometheus # 启用 Prometheus 插件
-  - admin # 启用管理插件
-  #- federation # 启用联邦插件
   
 log:
-  level: debug # debug | info | warn | error 日志级别
+  level: warn # debug | info | warn | error 日志级别
   format: text # json | text 日志格式
   # whether to dump MQTT packet in debug level 是否在 debug 级别输出 MQTT 报文
   dump_packet: false
