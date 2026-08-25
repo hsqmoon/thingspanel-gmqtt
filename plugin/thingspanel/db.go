@@ -58,6 +58,10 @@ func createRedisClient() *redis.Client {
 	redisHost := viper.GetString("db.redis.conn")
 	dataBase := viper.GetInt("db.redis.db_num")
 	password := viper.GetString("db.redis.password")
+	poolSize := viper.GetInt("db.redis.pool_size")
+	if poolSize <= 0 {
+		poolSize = 64
+	}
 	log.Println("连接redis...")
 	client := redis.NewClient(&redis.Options{
 		Addr:         redisHost,
@@ -67,7 +71,7 @@ func createRedisClient() *redis.Client {
 		WriteTimeout: 1 * time.Minute,
 		PoolTimeout:  2 * time.Minute,
 		IdleTimeout:  10 * time.Minute,
-		PoolSize:     1000,
+		PoolSize:     poolSize,
 	})
 
 	// 通过 cient.Ping() 来检查是否成功连接到了 redis 服务器
@@ -98,6 +102,22 @@ func createPgClient() *gorm.DB {
 	} else {
 		log.Println("连接数据库成功...")
 	}
+	sqlDB, err := d.DB()
+	if err != nil {
+		panic(err)
+	}
+	maxOpen := viper.GetInt("db.psql.max_open_conns")
+	if maxOpen <= 0 {
+		maxOpen = 6
+	}
+	maxIdle := viper.GetInt("db.psql.max_idle_conns")
+	if maxIdle <= 0 || maxIdle > maxOpen {
+		maxIdle = 2
+	}
+	sqlDB.SetMaxOpenConns(maxOpen)
+	sqlDB.SetMaxIdleConns(maxIdle)
+	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	return d
 }
 
@@ -139,6 +159,13 @@ func DelNX(key string) (err error) {
 	return
 }
 
+func cacheDevice(voucher string, device *Device) error {
+	if err := SetStr(voucher, device.ID, 0); err != nil {
+		return err
+	}
+	return SetRedisForJsondata(device.ID, device, 0)
+}
+
 // setRedis 将任何类型的对象序列化为 JSON 并存储在 Redis 中
 func SetRedisForJsondata(key string, value interface{}, expiration time.Duration) error {
 	jsonData, err := json.Marshal(value)
@@ -169,15 +196,7 @@ func GetDeviceByVoucher(voucher string) (*Device, error) {
 			Log.Info("【获取设备信息】失败", zap.String("voucher", voucher), zap.Error(result.Error))
 			return nil, result.Error
 		}
-		// 修改token的时候，需要删除旧的token
-		// 将token存入redis
-		err := SetStr(voucher, device.ID, 0)
-		if err != nil {
-			return nil, err
-		}
-		// 将设备信息存入redis
-		err = SetRedisForJsondata(deviceId, device, 0)
-		if err != nil {
+		if err := cacheDevice(voucher, &device); err != nil {
 			return nil, err
 		}
 	} else {
@@ -196,6 +215,9 @@ func GetDeviceByVoucher(voucher string) (*Device, error) {
 // 先从redis中获取设备信息，如果没有则从数据库中获取设备信息，并将设备信息存入redis
 func GetDeviceById(deviceId string) (*Device, error) {
 	var device Device
+	if err := GetRedisForJsondata(deviceId, &device); err == nil && device.ID != "" {
+		return &device, nil
+	}
 	result := db.Model(&Device{}).Where("id = ?", deviceId).First(&device)
 	if result.Error != nil {
 		return nil, result.Error
