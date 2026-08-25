@@ -15,8 +15,8 @@ db:
     psqldb: ThingsPanel
     psqluser: postgres
     psqlpass: postgresThingsPanel
-    max_open_conns: 6
-    max_idle_conns: 2
+    max_open_conns: 16
+    max_idle_conns: 4
 
 mqtt:
   # 生产必须通过 GMQTT_MQTT_PASSWORD / GMQTT_MQTT_PLUGIN_PASSWORD 覆盖。
