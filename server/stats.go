@@ -18,11 +18,7 @@ type statsManager struct {
 
 func (s *statsManager) getClientStats(clientID string) (stats *ClientStats) {
 	if stats = s.clientStats[clientID]; stats == nil {
-		subStats, _ := s.subStatsReader.GetClientStats(clientID)
-
-		stats = &ClientStats{
-			SubscriptionStats: subStats,
-		}
+		stats = &ClientStats{}
 		s.clientStats[clientID] = stats
 	}
 	return stats
@@ -474,17 +470,20 @@ func (s *statsManager) GetGlobalStats() GlobalStats {
 // GetClientStats returns the client statistic information for given client id.
 func (s *statsManager) GetClientStats(clientID string) (ClientStats, bool) {
 	s.clientMu.Lock()
-	defer s.clientMu.Unlock()
-	if stats := s.clientStats[clientID]; stats == nil {
+	stats := s.clientStats[clientID]
+	if stats == nil {
+		s.clientMu.Unlock()
 		return ClientStats{}, false
-	} else {
-		s, _ := s.subStatsReader.GetClientStats(clientID)
-		return ClientStats{
-			PacketStats:       *stats.PacketStats.copy(),
-			MessageStats:      *stats.MessageStats.copy(),
-			SubscriptionStats: s,
-		}, true
 	}
+	packetStats := *stats.PacketStats.copy()
+	messageStats := *stats.MessageStats.copy()
+	s.clientMu.Unlock()
+	subscriptionStats, _ := s.subStatsReader.GetClientStats(clientID)
+	return ClientStats{
+		PacketStats:       packetStats,
+		MessageStats:      messageStats,
+		SubscriptionStats: subscriptionStats,
+	}, true
 
 }
 
