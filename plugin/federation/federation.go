@@ -33,6 +33,10 @@ import (
 
 var _ server.Plugin = (*Federation)(nil)
 
+var createSerf = func(config *serf.Config) (iSerf, error) {
+	return serf.Create(config)
+}
+
 const Name = "federation"
 
 func init() {
@@ -110,7 +114,7 @@ func New(config config.Config) (server.Plugin, error) {
 		return nil, err
 	}
 	serfCfg := getSerfConfig(cfg, f.serfEventCh, logOut)
-	s, err := serf.Create(serfCfg)
+	s, err := createSerf(serfCfg)
 	if err != nil {
 		return nil, err
 	}

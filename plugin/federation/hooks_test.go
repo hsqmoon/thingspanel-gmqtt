@@ -18,10 +18,21 @@ import (
 
 func init() {
 	log = zap.NewNop()
+	createSerf = func(*serf.Config) (iSerf, error) {
+		return testSerf{}, nil
+	}
 	servePeerEventStream = func(p *peer) {
 		return
 	}
 }
+
+type testSerf struct{}
+
+func (testSerf) Join([]string, bool) (int, error) { return 0, nil }
+func (testSerf) RemoveFailedNode(string) error    { return nil }
+func (testSerf) Leave() error                     { return nil }
+func (testSerf) Members() []serf.Member           { return nil }
+func (testSerf) Shutdown() error                  { return nil }
 
 var testConfig = config.Config{
 	Plugins: map[string]config.Configuration{
